@@ -6,28 +6,33 @@ import time
 import threading
 from enum import Enum
 
+PRINT = True
+
 LOG_FILE = "log.txt"
 MAP_FILE = "map2017"
-STARTING_ORIENTATION = 'e'
+STARTING_ORIENTATION = 's'
+
+LIMIT_BLACK = 40
+
 BASE_SPEED = 70
-K = 0 #0.4
-CORRECTION_SPEED_OUTSIDE = 35 #70
+K = 0.5 #0.4
+CORRECTION_SPEED_OUTSIDE = 70 #70
 CORRECTION_SPEED_INSIDE = K*CORRECTION_SPEED_OUTSIDE
 
-TURN_SPEED_90 = 70 #70
+TURN_SPEED_90 = 60 #70
 TURN_SPEED_180 = 50
 
 slow = False
 if slow:
 	BASE_SPEED = 60
 	CORRECTION_SPEED_OUTSIDE=50
-	K=0.3
+	K=0.6
 	CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
 	TURN_SPEED_90=60
 	TURN_SPEED_180=50
 
 def is_black(value):
-	return value<40
+	return value<LIMIT_BLACK
 
 def is_light_black(value):
 	return value<500
@@ -90,7 +95,7 @@ class Robot:
 		while self.running:
 			left = self.leftSensor.value()
 			right = self.rightSensor.value()
-			print("{} {}".format(left, right))
+			if PRINT : print("{} {}".format(left, right))
 			if is_black(left) and is_black(right):
 				self.stop()
 				self.escape_from_black()
@@ -98,12 +103,12 @@ class Robot:
 			if is_black(left):
 				self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
 				self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
-				print("Correction")
+				if PRINT : print("Correction")
 			else:
 				if is_black(right):
 					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
 					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
-					print("Correctoin")
+					if PRINT : print("Correctoin")
 				else:
 					self.leftMotor.duty_cycle_sp = BASE_SPEED
 					self.rightMotor.duty_cycle_sp = BASE_SPEED
@@ -113,9 +118,12 @@ class Robot:
 		self.leftMotor.duty_cycle_sp = BASE_SPEED
 		self.rightMotor.polarity = "inversed"
 		self.leftMotor.polarity = "inversed"
+		
+		
 		while self.running:
 			left = self.leftSensor.value()
 			right = self.rightSensor.value()
+			if PRINT: print("{} {}".format(left, right))
 			if is_black(left) and is_black(right):
 				
 				while self.running:
@@ -128,11 +136,13 @@ class Robot:
 						self.run_forward()
 						return
 			if is_black(left):
-				self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+				if PRINT: print("Correction 1")
+				self.rightMotor.duty_cycle_sp = 0#CORRECTION_SPEED_INSIDE
 				self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
 			else:
 				if is_black(right):
-					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+					if PRINT: print("Correction 2")
+					self.leftMotor.duty_cycle_sp = 0#CORRECTION_SPEED_INSIDE
 					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
 				else:
 					self.leftMotor.duty_cycle_sp = BASE_SPEED
@@ -144,17 +154,22 @@ class Robot:
 		last_color = self.armSensor.value()
 		while self.running:
 			new_color = self.armSensor.value()
-			if is_light_black(last_color) and not is_light_black(new_color):
+			left = self.leftSensor.value()
+			right = self.rightSensor.value()
+			if PRINT: print("{} {} {}".format(left,right,new_color))
+			if is_light_black(new_color): #and not is_light_black(new_color):
 				self.stop()
 				return
 			last_color = new_color
-			if is_black(self.leftSensor.value()):
-				self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE-10
-				self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE-5
+			if is_black(left):
+				if PRINT: print("Correction")
+				self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
+				self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
 			else:
-				if is_black(self.rightSensor.value()):
-					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE-10
-					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE-5
+				if is_black(right):
+					if PRINT: print("Correction")
+					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
+					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
 				else:
 					self.leftMotor.duty_cycle_sp = BASE_SPEED-10
 					self.rightMotor.duty_cycle_sp = BASE_SPEED-10	
@@ -257,6 +272,7 @@ class Robot:
 			last_color = new_color
 
 	def stop(self):
+		if PRINT: print("STOP ----------------------------")
 		self.rightMotor.duty_cycle_sp = 0
 		self.leftMotor.duty_cycle_sp = 0
 
@@ -268,12 +284,15 @@ class Robot:
 			'c':self.run_forward_with_can,
 			'a':self.turn_left_left,}
 		while self.running and len(instruction) != 0:
+			if PRINT: print("Nouvelle instruction : escape")
 			self.escape_from_black()
-			dicte[instruction.pop(0)]()
+			i = instruction.pop(0)
+			if PRINT: print("Nouvelle instruction : {}".format(i))
+			dicte[i]()
 
 	def test_sensor(self):
 		while self.running:
-			print("Left {}, Right {}, Arm {}".format(self.leftSensor.value(), self.rightSensor.value(), self.armSensor.value()))
+			if PRINT: print("Left {}, Right {}, Arm {}".format(self.leftSensor.value(), self.rightSensor.value(), self.armSensor.value()))
 # }}}
 # {{{ Instruction Converter
 class InstructionConverter:
@@ -288,6 +307,8 @@ class InstructionConverter:
 		if InstructionConverter.is_upper(instruction) and not InstructionConverter.is_upper(self.previous):
 			b = 'c'
 		else:
+			if InstructionConverter.is_upper(instruction) and InstructionConverter.is_upper(self.previous):
+				return 'fc'
 			if InstructionConverter.is_upper(instruction):
 				self.orientation = new
 				return 'c'
@@ -330,6 +351,14 @@ class InstructionConverter:
 			result = result + v
 			self.previous = i
 		return list(result)
+	
+	def convert_letter(i):
+		dict = {'u':'n', 'U':'N', 'd':'s', 'D':'S', 'l':'w', 'L':'W', 'r':'e', 'R':'E'}
+		res = ''
+		for char in i:
+			res = res + dict[char]
+		print(res)
+		return res
 
 # }}}
 if __name__ == "__main__":
@@ -343,11 +372,13 @@ if __name__ == "__main__":
 	instruction = "UddlluuRRddlUrrruuuulldDDuuurrddddlLuuuuruulllddRRddddrruuuLUUUruLLLulDrrrddddrdddlluuUruuullddRdrUUUruLulDrddddrddLdlUUUruuuulldddRdrUUUddlluuurRurDlddddlddddlluRdrUUUUruuuulldddRdrUUUUddddldddlluRdrUUU"
 	
 	instruction = "eNsswwnnEEsW"
+	instruction = "dlllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUruLdlUruLLrrddddllldddr"
+	instruction = InstructionConverter.convert_letter(instruction)
 	instruction = list(instruction)	
 	converter = InstructionConverter()
-	x=converter.translate(instruction)+['b','a']
-
+	x=converter.translate(instruction)
 	LOGGER.log(str(x))
 	robot.execution(x)
+	#robot.test_sensor()
 	print("STOP")
 	robot.stop()
