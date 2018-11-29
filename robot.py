@@ -143,18 +143,24 @@ class Robot:
 						self.leftMotor.polarity = "normal"
 						self.run_forward()
 						return
-			if is_black(left):
-				if PRINT: print("Correction 1")
-				self.rightMotor.duty_cycle_sp = 0#CORRECTION_SPEED_INSIDE
-				self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
-			else:
-				if is_black(right):
-					if PRINT: print("Correction 2")
-					self.leftMotor.duty_cycle_sp = 0#CORRECTION_SPEED_INSIDE
-					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
-				else:
-					self.leftMotor.duty_cycle_sp = BASE_SPEED
-					self.rightMotor.duty_cycle_sp = BASE_SPEED
+			#if is_black(left):
+			#	if PRINT: print("Correction 1")
+			#	self.rightMotor.polarity = "normal"
+			#	self.leftMotor.polarity = "normal"
+			#	self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+			#	self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
+			#else:
+			#	if is_black(right):
+			#		if PRINT: print("Correction 2")
+			#		self.rightMotor.polarity = "normal"
+			#		self.leftMotor.polarity = "normal"
+			#		self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+			#		self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
+			#	else:
+			self.rightMotor.polarity = "inversed"
+			self.leftMotor.polarity = "inversed"
+			self.leftMotor.duty_cycle_sp = BASE_SPEED
+			self.rightMotor.duty_cycle_sp = BASE_SPEED
 
 	def run_forward_with_can(self):
 		self.rightMotor.duty_cycle_sp = BASE_SPEED
