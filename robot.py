@@ -15,21 +15,29 @@ STARTING_ORIENTATION = 's'
 LIMIT_BLACK = 40
 
 BASE_SPEED = 70
-K = 0.5 #0.4
+K = 0.4#0.4
 CORRECTION_SPEED_OUTSIDE = 70 #70
 CORRECTION_SPEED_INSIDE = K*CORRECTION_SPEED_OUTSIDE
 
 TURN_SPEED_90 = 60 #70
 TURN_SPEED_180 = 50
 
-slow = False
-if slow:
+mode = "SLOW" #"NORMAL" #"FAST"
+if mode == "SLOW":
 	BASE_SPEED = 60
-	CORRECTION_SPEED_OUTSIDE=50
-	K=0.6
+	CORRECTION_SPEED_OUTSIDE=BASE_SPEED
+	K=0.5
 	CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
 	TURN_SPEED_90=60
 	TURN_SPEED_180=50
+else:
+	if mode == "NORMAL":
+		BASE_SPPED = 70
+		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
+		K=0.6
+		CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
+		TURN_SPEED_90=60
+		TURN_SPEED_180=50
 
 def is_black(value):
 	return value<LIMIT_BLACK
@@ -176,10 +184,13 @@ class Robot:
 	def escape_from_black(self):
 		self.leftMotor.duty_cycle_sp = TURN_SPEED_90
 		self.rightMotor.duty_cycle_sp = TURN_SPEED_90
+		#while self.running and (not is_black(right) or not is_black(left):
+			#righ = self.rightSensor.value()
+			#left = self.ri
 		while self.running:
 			right = self.rightSensor.value()
-			left = self.rightSensor.value()
-			if not is_black(right) and not is_black(left):
+			left = self.leftSensor.value()
+			if not is_black(right) or not is_black(left):
 				self.stop()
 				return
 			
@@ -187,6 +198,8 @@ class Robot:
 		last_color = self.rightSensor.value()
 		self.leftMotor.duty_cycle_sp = TURN_SPEED_90
 		self.rightMotor.duty_cycle_sp = 0
+		#self.leftMotor.run_to_rel_pos(speed_sp=900, position_sp=self.rightMotor.count_per_rot)
+		#self.leftMotor.run_direct()
 		while self.running:
 			new_color = self.rightSensor.value()
 			if not is_black(new_color):
@@ -372,11 +385,13 @@ if __name__ == "__main__":
 	instruction = "UddlluuRRddlUrrruuuulldDDuuurrddddlLuuuuruulllddRRddddrruuuLUUUruLLLulDrrrddddrdddlluuUruuullddRdrUUUruLulDrddddrddLdlUUUruuuulldddRdrUUUddlluuurRurDlddddlddddlluRdrUUUUruuuulldddRdrUUUUddddldddlluRdrUUU"
 	
 	instruction = "eNsswwnnEEsW"
-	instruction = "dlllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUruLdlUruLLrrddddllldddr"
+	instruction = "d"
+	instruction = "dlllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUruLdlUruLLrrddddlllddddrrrruLdllUUUluRRdrUUUluRurDlddddlldddrruLdlUUUluRRdrUUUluurrdLulD"
 	instruction = InstructionConverter.convert_letter(instruction)
 	instruction = list(instruction)	
 	converter = InstructionConverter()
 	x=converter.translate(instruction)
+	#x = ['r']
 	LOGGER.log(str(x))
 	robot.execution(x)
 	#robot.test_sensor()
