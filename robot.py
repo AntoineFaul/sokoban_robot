@@ -10,19 +10,11 @@ PRINT = True
 
 LOG_FILE = "log.txt"
 MAP_FILE = "map2017"
-STARTING_ORIENTATION = 's'
 
 LIMIT_BLACK = 40
-
-BASE_SPEED = 70
-K = 0.4#0.4
-CORRECTION_SPEED_OUTSIDE = 70 #70
-CORRECTION_SPEED_INSIDE = K*CORRECTION_SPEED_OUTSIDE
-
-TURN_SPEED_90 = 60 #70
-TURN_SPEED_180 = 50
-
+STARTING_ORIENTATION = 's'
 mode = "NORMAL" #"NORMAL" #"FAST"
+
 if mode == "SLOW":
 	BASE_SPEED = 60
 	CORRECTION_SPEED_OUTSIDE=BASE_SPEED
@@ -38,6 +30,13 @@ else:
 		CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
 		TURN_SPEED_90=60
 		TURN_SPEED_180=50
+	else: # FAST
+		BASE_SPPED = 80
+		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
+		K=0.7
+		CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
+		TURN_SPEED_90=60
+		TURN_SPEED_180=50
 
 def is_black(value):
 	return value<LIMIT_BLACK
@@ -45,7 +44,7 @@ def is_black(value):
 def is_light_black(value):
 	return value<500
 
-#{{{ Logger class 
+#{{{ Logger class
 class Logger:
 	def __init__(self):
 		self.file = open(LOG_FILE, "at")
@@ -53,7 +52,7 @@ class Logger:
 
 	def __del__(self):
 		self.file.close()
-	
+
 	def log(self, text, level=0):
 		print(text)
 		self.file.write(text+"\n")
@@ -78,14 +77,14 @@ class Robot:
 
 		signal.signal(signal.SIGINT, self.exit_gracefully)
 		signal.signal(signal.SIGTERM, self.exit_gracefully)
-		
+
 		self.leftMotor.reset()
 		self.rightMotor.reset()
 		self.running = True
 		self.leftMotor.run_direct()
 		self.rightMotor.run_direct()
 
-	
+
 	def shutdown(self):
 		self.rightMotor.duty_cycle_sp = 0
 		self.leftMotor.duty_cycle_sp = 0
@@ -120,20 +119,20 @@ class Robot:
 				else:
 					self.leftMotor.duty_cycle_sp = BASE_SPEED
 					self.rightMotor.duty_cycle_sp = BASE_SPEED
-	
+
 	def run_backward(self):
 		self.rightMotor.duty_cycle_sp = BASE_SPEED
 		self.leftMotor.duty_cycle_sp = BASE_SPEED
 		self.rightMotor.polarity = "inversed"
 		self.leftMotor.polarity = "inversed"
-		
-		
+
+
 		while self.running:
 			left = self.leftSensor.value()
 			right = self.rightSensor.value()
 			if PRINT: print("{} {}".format(left, right))
 			if is_black(left) and is_black(right):
-				
+
 				while self.running:
 					left = self.leftSensor.value()
 					right = self.rightSensor.value()
@@ -186,7 +185,7 @@ class Robot:
 					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
 				else:
 					self.leftMotor.duty_cycle_sp = BASE_SPEED-10
-					self.rightMotor.duty_cycle_sp = BASE_SPEED-10	
+					self.rightMotor.duty_cycle_sp = BASE_SPEED-10
 	def escape_from_black(self):
 		self.leftMotor.duty_cycle_sp = TURN_SPEED_90
 		self.rightMotor.duty_cycle_sp = TURN_SPEED_90
@@ -199,7 +198,7 @@ class Robot:
 			if not is_black(right) or not is_black(left):
 				self.stop()
 				return
-			
+
 	def turn_right(self):
 		last_color = self.rightSensor.value()
 		self.leftMotor.duty_cycle_sp = TURN_SPEED_90
@@ -258,7 +257,7 @@ class Robot:
 						self.stop()
 						self.run_forward()
 						return
-			
+
 			last_color = new_color
 
 	def turn_left_left(self, is_between_cross = False):
@@ -287,7 +286,7 @@ class Robot:
 						self.stop()
 						self.run_forward()
 						return
-			
+
 			last_color = new_color
 
 	def stop(self):
@@ -347,7 +346,7 @@ class InstructionConverter:
 			x= a+'l'+b
 		self.orientation = new
 		return x
-	
+
 	def switch_direction(direction):
 		if direction == 'n' or direction == 'N':
 			return 0
@@ -359,7 +358,7 @@ class InstructionConverter:
 			return 3
 		LOGGER.log("Error switch_direction")
 		raise Exception()
-	
+
 	def translate(self,instruction):
 		self.has_can = False
 		self.previous = None
@@ -370,7 +369,7 @@ class InstructionConverter:
 			result = result + v
 			self.previous = i
 		return list(result)
-	
+
 	def convert_letter(i):
 		dict = {'u':'n', 'U':'N', 'd':'s', 'D':'S', 'l':'w', 'L':'W', 'r':'e', 'R':'E'}
 		res = ''
@@ -389,12 +388,12 @@ if __name__ == "__main__":
 	#instruction = ['f', 'r',  'c', 'b', 'a']
 	#robot.execution(instruction)
 	instruction = "UddlluuRRddlUrrruuuulldDDuuurrddddlLuuuuruulllddRRddddrruuuLUUUruLLLulDrrrddddrdddlluuUruuullddRdrUUUruLulDrddddrddLdlUUUruuuulldddRdrUUUddlluuurRurDlddddlddddlluRdrUUUUruuuulldddRdrUUUUddddldddlluRdrUUU"
-	
+
 	instruction = "eNsswwnnEEsW"
 	instruction = "d"
 	instruction = "dlllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUruLdlUruLLrrddddlllddddrrrruLdllUUUluRRdrUUUluRurDlddddlldddrruLdlUUUluRRdrUUUluurrdLulD"
 	instruction = InstructionConverter.convert_letter(instruction)
-	instruction = list(instruction)	
+	instruction = list(instruction)
 	converter = InstructionConverter()
 	x=converter.translate(instruction)
 	#x = ['r']
