@@ -14,6 +14,7 @@ MAP_FILE = "map2017"
 LIMIT_BLACK = 40
 STARTING_ORIENTATION = 's'
 mode = "NORMAL" #"NORMAL" #"FAST"
+turn_mode = "PIVOT" #"SPIN"
 
 if mode == "SLOW":
 	BASE_SPEED = 60
@@ -24,14 +25,14 @@ if mode == "SLOW":
 	TURN_SPEED_180=50
 else:
 	if mode == "NORMAL":
-		BASE_SPPED = 70
+		BASE_SPEED = 70
 		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
 		K=0.6
 		CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
 		TURN_SPEED_90=60
 		TURN_SPEED_180=50
 	else: # FAST
-		BASE_SPPED = 80
+		BASE_SPEED = 80
 		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
 		K=0.7
 		CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
@@ -186,6 +187,7 @@ class Robot:
 				else:
 					self.leftMotor.duty_cycle_sp = BASE_SPEED-10
 					self.rightMotor.duty_cycle_sp = BASE_SPEED-10
+
 	def escape_from_black(self):
 		self.leftMotor.duty_cycle_sp = TURN_SPEED_90
 		self.rightMotor.duty_cycle_sp = TURN_SPEED_90
@@ -201,10 +203,9 @@ class Robot:
 
 	def turn_right(self):
 		last_color = self.rightSensor.value()
-		self.leftMotor.duty_cycle_sp = TURN_SPEED_90
-		self.rightMotor.duty_cycle_sp = 0
-		#self.leftMotor.run_to_rel_pos(speed_sp=900, position_sp=self.rightMotor.count_per_rot)
-		#self.leftMotor.run_direct()
+
+		turn_configuration( self.leftMotor, self.rightMotor)
+
 		while self.running:
 			new_color = self.rightSensor.value()
 			if not is_black(new_color):
@@ -213,10 +214,21 @@ class Robot:
 		while self.running:
 			new_color = self.rightSensor.value()
 			if is_black(last_color) and not is_black(new_color):
+				self.rightMotor.polarity = "normal"
+				self.leftMotor.polarity = "normal"
 				self.stop()
 				self.run_forward()
 				return
 			last_color = new_color
+
+	def turn_configuration( insideWheel, outsideWheel):
+		if turn_mode == "PIVOT":
+			insideWheel.duty_cycle_sp = TURN_SPEED_90
+			outsideWheel.duty_cycle_sp = 0
+		else:
+			insideWheel.duty_cycle_sp = TURN_SPEED_90
+			outsideWheel.duty_cycle_sp = TURN_SPEED_90
+			outsideWheel.polarity = "inversed"
 
 	def turn_left(self):
 		last_color = self.leftSensor.value()
