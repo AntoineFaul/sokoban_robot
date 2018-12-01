@@ -9,14 +9,13 @@ from enum import Enum
 PRINT = True
 
 LOG_FILE = "log.txt"
-MAP_FILE = "map2017"
-STARTING_ORIENTATION = 's'
+STARTING_ORIENTATION = 'w'
 
 LIMIT_BLACK = 40
 
 
 
-mode = "NORMAL" #"NORMAL" #"FAST"
+mode = "TEST" #"NORMAL" #"FAST"
 if mode == "SLOW":
 	BASE_SPEED = 60
 	BASE_SPEED_P = 70
@@ -37,15 +36,30 @@ else:
 		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
 		CORRECTION_SPEED_INSIDE_P = K*CORRECTION_SPEED_OUTSIDE_P
 		CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
-		TURN_SPEED_90=60
+		TURN_SPEED_90=90
 		TURN_SPEED_P = 90
 		TURN_SPEED_180=50
+	else:
+		if mode == "TEST":
+			K=0.5
+			Km=0.6
+			BASE_SPEED = 80
+			BASE_SPEED_P = 90
+			TURN_SPEED_90 = 60
+			TURN_SPEED_180 = 40
+			
+
+CORRECTION_SPEED_OUTSIDE = BASE_SPEED
+CORRECTION_SPEED_OUTSIDE_P = BASE_SPEED_P
+CORRECTION_SPEED_INSIDE = K*CORRECTION_SPEED_OUTSIDE
+CORRECTION_SPEED_INSIDE_P = Km*CORRECTION_SPEED_OUTSIDE_P
+TURN_SPEED = TURN_SPEED_90
 
 def is_black(value):
 	return value<LIMIT_BLACK
 
 def is_light_black(value):
-	return value<500
+	return value<550
 
 #{{{ Logger class
 class Logger:
@@ -235,7 +249,7 @@ class Robot:
 
 	def turn_right(self):
 		last_color = self.rightSensor.value()
-		self.leftMotor.duty_cycle_sp = TURN_SPEED_P
+		self.leftMotor.duty_cycle_sp = TURN_SPEED
 		self.rightMotor.duty_cycle_sp = 0
 		#self.leftMotor.run_to_rel_pos(speed_sp=900, position_sp=self.rightMotor.count_per_rot)
 		#self.leftMotor.run_direct()
@@ -258,7 +272,7 @@ class Robot:
 	def turn_left(self):
 		last_color = self.leftSensor.value()
 		self.leftMotor.duty_cycle_sp = 0
-		self.rightMotor.duty_cycle_sp = TURN_SPEED_P
+		self.rightMotor.duty_cycle_sp = TURN_SPEED
 		while self.running:
 			new_color = self.leftSensor.value()
 			if not is_black(new_color):
@@ -378,7 +392,7 @@ class InstructionConverter:
 				return 'c'
 			else:
 				b = ''
-		if not InstructionConverter.is_upper(instruction) and InstructionConverter.is_upper(self.previous):
+		if self.previous != instruction and InstructionConverter.is_upper(self.previous):
 			a = 'b'
 		else:
 			a = ''
@@ -438,14 +452,17 @@ if __name__ == "__main__":
 	instruction = "eNsswwnnEEsW"
 	instruction = "d"
 	instruction = "dlllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUruLdlUruLLrrddddlllddddrrrruLdllUUUluRRdrUUUluRurDlddddlldddrruLdlUUUluRRdrUUUluurrdLulD"
-	instruction = "ldllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUUruLLLrrddddlllddddrUUUluRRdrUUUruLurDrdddrrddddrruLdlUUUluRRdrUUUruulldRurD"
+	instruction = "LdllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUUruLLLrrddddlllddddrUUUluRRdrUUUruLulDrdddllddddrruLdlUUUluRRdrUUUruulldRurD"
 	instruction = InstructionConverter.convert_letter(instruction)
 	instruction = list(instruction)
 	converter = InstructionConverter()
 	x=converter.translate(instruction)
 	#x = ['r']
 	LOGGER.log(str(x))
+	a = time.time()
 	robot.execution(x)
+	b = time.time()
+	print("Start : {}, End : {}, Duration : {}".format(a,b,b-a))
 	#robot.test_sensor()
 	print("STOP")
 	robot.stop()
