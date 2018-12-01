@@ -439,6 +439,8 @@ if __name__ == "__main__":
 	instruction = "d"
 	instruction = "dlllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUruLdlUruLLrrddddlllddddrrrruLdllUUUluRRdrUUUluRurDlddddlldddrruLdlUUUluRRdrUUUluurrdLulD"
 	instruction = "ldllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUUruLLLrrddddlllddddrUUUluRRdrUUUruLurDrdddrrddddrruLdlUUUluRRdrUUUruulldRurD"
+	instruction = "LdllluuuuRRdrUUUruLLLulDrrrdddlllddrUluRRdrUUUruLdddlllddddrUUUluRRdrUUUUdddrrddddrruLdlUUUluRRdrUUUruuLLLrrDRurD"
+	ruLLLrrddddlllddddrUUUluRRdrUUUruLurDrdddrrddddrruLdlUUUluRRdrUUUruulldRurD"
 	instruction = InstructionConverter.convert_letter(instruction)
 	instruction = list(instruction)
 	converter = InstructionConverter()
