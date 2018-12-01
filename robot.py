@@ -14,29 +14,31 @@ STARTING_ORIENTATION = 's'
 
 LIMIT_BLACK = 40
 
-BASE_SPEED = 70
-K = 0.4#0.4
-CORRECTION_SPEED_OUTSIDE = 70 #70
-CORRECTION_SPEED_INSIDE = K*CORRECTION_SPEED_OUTSIDE
 
-TURN_SPEED_90 = 60 #70
-TURN_SPEED_180 = 50
 
 mode = "NORMAL" #"NORMAL" #"FAST"
 if mode == "SLOW":
 	BASE_SPEED = 60
+	BASE_SPEED_P = 70
 	CORRECTION_SPEED_OUTSIDE=BASE_SPEED
 	K=0.5
 	CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
+	CORRECTION_SPEED_OUTSIDE_P = BASE_SPEED_P
+	CORRECTION_SPEED_INSIDE_P = K* CORRECTION_SPEED_OUTSIDE_P
 	TURN_SPEED_90=60
+	TURN_SPEED_P = 60
 	TURN_SPEED_180=50
 else:
 	if mode == "NORMAL":
-		BASE_SPPED = 70
-		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
 		K=0.6
+		BASE_SPEED = 70
+		BASE_SPEED_P = 90
+		CORRECTION_SPEED_OUTSIDE_P = BASE_SPEED_P
+		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
+		CORRECTION_SPEED_INSIDE_P = K*CORRECTION_SPEED_OUTSIDE_P
 		CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
 		TURN_SPEED_90=60
+		TURN_SPEED_P = 90
 		TURN_SPEED_180=50
 
 def is_black(value):
@@ -97,29 +99,60 @@ class Robot:
 		self.running = False
 
 
-	def run_forward(self):
-		self.rightMotor.duty_cycle_sp = BASE_SPEED
-		self.leftMotor.duty_cycle_sp = BASE_SPEED
+	def run_forward(self, number=0):
+
+		if number > 0 :
+			self.rightMotor.duty_cycle_sp = BASE_SPEED_P
+			self.leftMotor.duty_cycle_sp = BASE_SPEED_P
+		else:
+			self.rightMotor.duty_cycle_sp = BASE_SPEED
+			self.leftMotor.duty_cycle_sp = BASE_SPEED
+
 		while self.running:
 			left = self.leftSensor.value()
 			right = self.rightSensor.value()
 			if PRINT : print("{} {}".format(left, right))
 			if is_black(left) and is_black(right):
-				self.stop()
-				self.escape_from_black()
-				return
+				if number==1:
+					self.rightMotor.duty_cycle_sp = BASE_SPEED
+					self.leftMotor.duty_cycle_sp = BASE_SPEED
+				else:
+					if number==0:
+						self.stop()
+						self.escape_from_black()
+						return
+				number -= 1
+				while self.running and is_black(left) and is_black(right):
+					if PRINT: print("On black")
+					self.rightMotor.duty_cycle_sp = BASE_SPEED_P
+					self.rightMotor.duty_cycle_sp = BASE_SPEED_P
+					left = self.leftSensor.value()
+					right = self.rightSensor.value()
+
 			if is_black(left):
-				self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
-				self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+				if number == 0:
+					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
+					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+				else:
+					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE_P
+					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE_P
 				if PRINT : print("Correction")
 			else:
 				if is_black(right):
-					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
-					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+					if number == 0:
+						self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
+						self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+					else:
+						self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE_P
+						self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE_P
 					if PRINT : print("Correctoin")
 				else:
-					self.leftMotor.duty_cycle_sp = BASE_SPEED
-					self.rightMotor.duty_cycle_sp = BASE_SPEED
+					if number == 0:
+						self.leftMotor.duty_cycle_sp = BASE_SPEED
+						self.rightMotor.duty_cycle_sp = BASE_SPEED
+					else:
+						self.leftMotor.duty_cycle_sp = BASE_SPEED_P
+						self.rightMotor.duty_cycle_sp = BASE_SPEED_P
 
 	def run_backward(self):
 		self.rightMotor.duty_cycle_sp = BASE_SPEED
@@ -202,7 +235,7 @@ class Robot:
 
 	def turn_right(self):
 		last_color = self.rightSensor.value()
-		self.leftMotor.duty_cycle_sp = TURN_SPEED_90
+		self.leftMotor.duty_cycle_sp = TURN_SPEED_P
 		self.rightMotor.duty_cycle_sp = 0
 		#self.leftMotor.run_to_rel_pos(speed_sp=900, position_sp=self.rightMotor.count_per_rot)
 		#self.leftMotor.run_direct()
@@ -211,9 +244,12 @@ class Robot:
 			if not is_black(new_color):
 				break
 		last_color = new_color
+
 		while self.running:
 			new_color = self.rightSensor.value()
-			if is_black(last_color) and not is_black(new_color):
+			if is_black(new_color):
+			#	self.leftMotor.duty_cycle_sp = TURN_SPEED_90
+			#if is_black(last_color) and not is_black(new_color):
 				self.stop()
 				self.run_forward()
 				return
@@ -222,7 +258,7 @@ class Robot:
 	def turn_left(self):
 		last_color = self.leftSensor.value()
 		self.leftMotor.duty_cycle_sp = 0
-		self.rightMotor.duty_cycle_sp = TURN_SPEED_90
+		self.rightMotor.duty_cycle_sp = TURN_SPEED_P
 		while self.running:
 			new_color = self.leftSensor.value()
 			if not is_black(new_color):
@@ -230,7 +266,9 @@ class Robot:
 		last_color = new_color
 		while self.running:
 			new_color = self.leftSensor.value()
-			if is_black(last_color) and not is_black(new_color):
+			if is_black(new_color):
+			#	self.rightMotor.duty_cycle_sp = TURN_SPEED_90
+			#if is_black(last_color) and not is_black(new_color):
 				self.stop()
 				self.run_forward()
 				return
@@ -306,8 +344,15 @@ class Robot:
 			if PRINT: print("Nouvelle instruction : escape")
 			self.escape_from_black()
 			i = instruction.pop(0)
+			j = 0
+			while i=='f' and instruction[0]=='f':
+				j = j+1
+				i = instruction.pop(0)
 			if PRINT: print("Nouvelle instruction : {}".format(i))
-			dicte[i]()
+			if i=='f':
+				dicte[i](number=j)
+			else :
+				dicte[i]()
 
 	def test_sensor(self):
 		while self.running:
