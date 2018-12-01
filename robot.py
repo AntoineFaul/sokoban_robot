@@ -14,13 +14,7 @@ STARTING_ORIENTATION = 's'
 
 LIMIT_BLACK = 40
 
-BASE_SPEED = 70
-K = 0.4#0.4
-CORRECTION_SPEED_OUTSIDE = 70 #70
-CORRECTION_SPEED_INSIDE = K*CORRECTION_SPEED_OUTSIDE
 
-TURN_SPEED_90 = 60 #70
-TURN_SPEED_180 = 50
 
 mode = "NORMAL" #"NORMAL" #"FAST"
 if mode == "SLOW":
@@ -29,14 +23,16 @@ if mode == "SLOW":
 	K=0.5
 	CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
 	TURN_SPEED_90=60
+	TURN_SPEED_P = 60
 	TURN_SPEED_180=50
 else:
 	if mode == "NORMAL":
-		BASE_SPPED = 70
+		BASE_SPEED = 70
 		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
 		K=0.6
 		CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
 		TURN_SPEED_90=60
+		TURN_SPEED_P = 90
 		TURN_SPEED_180=50
 
 def is_black(value):
@@ -202,7 +198,7 @@ class Robot:
 			
 	def turn_right(self):
 		last_color = self.rightSensor.value()
-		self.leftMotor.duty_cycle_sp = TURN_SPEED_90
+		self.leftMotor.duty_cycle_sp = TURN_SPEED_P
 		self.rightMotor.duty_cycle_sp = 0
 		#self.leftMotor.run_to_rel_pos(speed_sp=900, position_sp=self.rightMotor.count_per_rot)
 		#self.leftMotor.run_direct()
@@ -211,9 +207,12 @@ class Robot:
 			if not is_black(new_color):
 				break
 		last_color = new_color
+		
 		while self.running:
 			new_color = self.rightSensor.value()
-			if is_black(last_color) and not is_black(new_color):
+			if is_black(new_color):
+			#	self.leftMotor.duty_cycle_sp = TURN_SPEED_90
+			#if is_black(last_color) and not is_black(new_color):
 				self.stop()
 				self.run_forward()
 				return
@@ -222,7 +221,7 @@ class Robot:
 	def turn_left(self):
 		last_color = self.leftSensor.value()
 		self.leftMotor.duty_cycle_sp = 0
-		self.rightMotor.duty_cycle_sp = TURN_SPEED_90
+		self.rightMotor.duty_cycle_sp = TURN_SPEED_P
 		while self.running:
 			new_color = self.leftSensor.value()
 			if not is_black(new_color):
@@ -230,7 +229,9 @@ class Robot:
 		last_color = new_color
 		while self.running:
 			new_color = self.leftSensor.value()
-			if is_black(last_color) and not is_black(new_color):
+			if is_black(new_color):
+			#	self.rightMotor.duty_cycle_sp = TURN_SPEED_90
+			#if is_black(last_color) and not is_black(new_color):
 				self.stop()
 				self.run_forward()
 				return
