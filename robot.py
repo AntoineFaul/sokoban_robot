@@ -97,7 +97,7 @@ class Robot:
 		self.running = False
 
 
-	def run_forward(self, number):
+	def run_forward(self, number=0):
 
 		if number > 0 :
 			self.rightMotor.duty_cycle_sp = BASE_SPEED + 10
@@ -120,6 +120,12 @@ class Robot:
 						self.escape_from_black()
 						return
 				number -= 1
+				while self.running and is_black(left) and is_black(right):
+					if PRINT: print("On black")
+					self.rightMotor.duty_cycle_sp = BASE_SPEED+10
+					self.rightMotor.duty_cycle_sp = BASE_SPEED+10
+					left = self.leftSensor.value()
+					right = self.rightSensor.value()
 
 			if is_black(left):
 				self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
@@ -131,8 +137,12 @@ class Robot:
 					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
 					if PRINT : print("Correctoin")
 				else:
-					self.leftMotor.duty_cycle_sp = BASE_SPEED
-					self.rightMotor.duty_cycle_sp = BASE_SPEED
+					if number == 0:
+						self.leftMotor.duty_cycle_sp = BASE_SPEED
+						self.rightMotor.duty_cycle_sp = BASE_SPEED
+					else:
+						self.leftMotor.duty_cycle_sp = BASE_SPEED + 10
+						self.rightMotor.duty_cycle_sp = BASE_SPEED + 10
 
 	def run_backward(self):
 		self.rightMotor.duty_cycle_sp = BASE_SPEED
@@ -321,11 +331,11 @@ class Robot:
 			i = instruction.pop(0)
 			j = 0
 			while i=='f' and instruction[0]=='f':
-				j++
+				j = j+1
 				i = instruction.pop(0)				
 			if PRINT: print("Nouvelle instruction : {}".format(i))
 			if i=='f':
-				dicte[i](j)
+				dicte[i](number=j)
 			else :
 				dicte[i]()
 
