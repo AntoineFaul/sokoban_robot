@@ -25,16 +25,22 @@ TURN_SPEED_180 = 50
 mode = "NORMAL" #"NORMAL" #"FAST"
 if mode == "SLOW":
 	BASE_SPEED = 60
+	BASE_SPEED_P = 70
 	CORRECTION_SPEED_OUTSIDE=BASE_SPEED
 	K=0.5
 	CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
+	CORRECTION_SPEED_OUTSIDE_P = BASE_SPEED_P
+	CORRECTION_SPEED_INSIDE_P = K* CORRECTION_SPEED_OUTSIDE_P
 	TURN_SPEED_90=60
 	TURN_SPEED_180=50
 else:
 	if mode == "NORMAL":
-		BASE_SPPED = 70
-		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
 		K=0.6
+		BASE_SPEED = 70
+		BASE_SPEED_P = 90
+		CORRECTION_SPEED_OUTSIDE_P = BASE_SPEED_P
+		CORRECTION_SPEED_OUTSIDE=BASE_SPEED
+		CORRECTION_SPEED_INSIDE_P = K*CORRECTION_SPEED_OUTSIDE_P
 		CORRECTION_SPEED_INSIDE=K*CORRECTION_SPEED_OUTSIDE
 		TURN_SPEED_90=60
 		TURN_SPEED_180=50
@@ -100,8 +106,8 @@ class Robot:
 	def run_forward(self, number=0):
 
 		if number > 0 :
-			self.rightMotor.duty_cycle_sp = BASE_SPEED + 10
-			self.leftMotor.duty_cycle_sp = BASE_SPEED + 10
+			self.rightMotor.duty_cycle_sp = BASE_SPEED_P
+			self.leftMotor.duty_cycle_sp = BASE_SPEED_P
 		else:
 			self.rightMotor.duty_cycle_sp = BASE_SPEED
 			self.leftMotor.duty_cycle_sp = BASE_SPEED
@@ -122,27 +128,35 @@ class Robot:
 				number -= 1
 				while self.running and is_black(left) and is_black(right):
 					if PRINT: print("On black")
-					self.rightMotor.duty_cycle_sp = BASE_SPEED+10
-					self.rightMotor.duty_cycle_sp = BASE_SPEED+10
+					self.rightMotor.duty_cycle_sp = BASE_SPEED_P
+					self.rightMotor.duty_cycle_sp = BASE_SPEED_P
 					left = self.leftSensor.value()
 					right = self.rightSensor.value()
 
 			if is_black(left):
-				self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
-				self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+				if number == 0:
+					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
+					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+				else:
+					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE_P
+					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE_P
 				if PRINT : print("Correction")
 			else:
 				if is_black(right):
-					self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
-					self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+					if number == 0:
+						self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE
+						self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE
+					else:
+						self.leftMotor.duty_cycle_sp = CORRECTION_SPEED_OUTSIDE_P
+						self.rightMotor.duty_cycle_sp = CORRECTION_SPEED_INSIDE_P
 					if PRINT : print("Correctoin")
 				else:
 					if number == 0:
 						self.leftMotor.duty_cycle_sp = BASE_SPEED
 						self.rightMotor.duty_cycle_sp = BASE_SPEED
 					else:
-						self.leftMotor.duty_cycle_sp = BASE_SPEED + 10
-						self.rightMotor.duty_cycle_sp = BASE_SPEED + 10
+						self.leftMotor.duty_cycle_sp = BASE_SPEED_P
+						self.rightMotor.duty_cycle_sp = BASE_SPEED_P
 
 	def run_backward(self):
 		self.rightMotor.duty_cycle_sp = BASE_SPEED
